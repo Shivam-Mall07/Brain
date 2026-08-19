@@ -1,7 +1,13 @@
+import dns from "dns";
+
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
 import express from "express";
 import "dotenv/config";
 import cors from "cors";
 import fetch from "node-fetch";
+import mongoose from "mongoose";
+import chatRoutes from "./routes/chat.js"
 
 const app = express();
 const PORT = 8080;
@@ -9,46 +15,60 @@ const PORT = 8080;
 app.use(express.json());
 app.use(cors());
 
-app.post("/test", async (req, res) => {
-    try {
-        const { prompt } = req.body;
+app.use("/api", chatRoutes);
 
-        const response = await fetch(
-            "https://generativelanguage.googleapis.com/v1/interactions",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": process.env.GEMINI_API_KEY
-                },
-                body: JSON.stringify({
-                    model: "gemini-3.6-flash",
-                    input: prompt
-                })
-            }
-        );
+// app.post("/test", async (req, res) => {
+//     try {
+//         const { prompt } = req.body;
 
-        const data = await response.json();
+//         const response = await fetch(
+//             "https://generativelanguage.googleapis.com/v1/interactions",
+//             {
+//                 method: "POST",
+//                 headers: {
+//                     "Content-Type": "application/json",
+//                     "x-goog-api-key": process.env.GEMINI_API_KEY
+//                 },
+//                 body: JSON.stringify({
+//                     model: "gemini-3.6-flash",
+//                     input: prompt
+//                 })
+//             }
+//         );
 
-        const answer = data.steps
-            ?.find(step => step.type === "model_output")
-            ?.content
-            ?.find(item => item.type === "text")
-            ?.text;
+//         const data = await response.json();
 
-        res.status(response.status).json({
-            answer
-        });
+//         const answer = data.steps
+//             ?.find(step => step.type === "model_output")
+//             ?.content
+//             ?.find(item => item.type === "text")
+//             ?.text;
 
-    } catch (err) {
-        console.error(err);
+//         res.status(response.status).json({
+//             answer
+//         });
 
-        res.status(500).json({
-            error: "Something went wrong"
-        });
-    }
-});
+//     } catch (err) {
+//         console.error(err);
+
+//         res.status(500).json({
+//             error: "Something went wrong"
+//         });
+//     }
+// });
 
 app.listen(PORT, () => {
     console.log(`Server running on ${PORT}`);
+    connectDB(); 
 });
+
+const connectDB = async() =>{
+    try{
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log("Connected with Databse!");
+        
+    }catch(err){
+        console.log("Failed to connect with Db",err);
+        
+    }
+}
